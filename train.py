@@ -9,6 +9,7 @@
 #           specified using CLI arguments, with --path_config <path_to_yaml_file> . If you don't use comet ml, set the parameter comet_ml to False
 
 import time
+import comet_ml
 import torch 
 import torch.nn as nn
 import random
