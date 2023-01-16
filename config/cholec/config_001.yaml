@@ -4,8 +4,8 @@ experiment_key:
 logs_dir: logs
 
 # dataset info
-dataset: sts2017
-path_data: data/Tools/STS2017_v1/ # must contain a folder named images and a folder named qa
+dataset: cholec
+path_data: data/Tools/CholecVQA_v1/ # must contain a folder named images and a folder named qa
 augment: True # only horizontal random flips in this case because rotations are not useful
 
 # training and data-loading-related parameters

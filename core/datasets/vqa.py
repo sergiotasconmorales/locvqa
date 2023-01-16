@@ -179,7 +179,7 @@ class VQARegionsSingle(VQABase):
 
 def get_vqa_dataset(subset, config, dataset_visual):
     # provides dataset class for current training config
-    if config['dataset'] in ['Cholec', 'sts2017']:
+    if config['dataset'] in ['cholec', 'sts2017']:
         dataset_vqa = VQARegionsSingle(subset, config, dataset_visual)
     elif config['dataset'] == 'IDRID':
         raise NotImplementedError
