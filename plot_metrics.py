@@ -13,10 +13,6 @@ import pickle
 import os
 from plot import plotter
 from metrics import metrics 
-from misc import general 
-import matplotlib.pyplot as plt
-
-torch.manual_seed(1234) # use same seed for reproducibility
 
 # read config name from CLI argument --path_config
 args = io.get_config_file_name()
