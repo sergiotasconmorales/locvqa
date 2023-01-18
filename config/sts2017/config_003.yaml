@@ -15,7 +15,7 @@ mask_as_text: False # whether mask should be in the question or as a separate ma
 alt_questions: False # whether or not to use the questions that describe the region in the text (i.e. no external masks)
 max_question_length: 12 # length for questions that do not contain the region
 max_question_length_alt: 21 # length for questions that contain the region as text
-process_qa_again: True # whether or not QA pairs should be pre-processed again
+process_qa_again: False # whether or not QA pairs should be pre-processed again
 num_answers: 2 # binary in this case so we can use all answers. During QA pre-processing UNK token will be added so final number of possible answers will be this plus one.
 tokenizer: spacy # which tokenizer to use
 min_word_frequency: 0
