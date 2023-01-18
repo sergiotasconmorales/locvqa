@@ -6,6 +6,7 @@
 #   Sergio Tascon-Morales, Ph.D. Student, ARTORG Center, University of Bern
 
 from matplotlib import pyplot as plt
+from os.path import join as jp
 import numpy as np
 
 def show_image(img, title=None, cmap=None):
