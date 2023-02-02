@@ -9,7 +9,6 @@ from os.path import join as jp
 import misc.io as io
 import torch
 import json
-import pickle
 import os
 from plot import plotter
 from metrics import metrics 
