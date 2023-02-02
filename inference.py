@@ -8,6 +8,7 @@
 import comet_ml 
 import torch
 import misc.io as io
+from metrics import metrics
 from misc import printer
 from core.datasets import loaders_factory
 from core.models import model_factory
@@ -61,6 +62,47 @@ def main():
     print("Metrics after inference on the val set, best epoch")
     print(metrics_val)
     train_utils.save_results(results_val, 'val', config, path_logs)
+
+    # adding code to get results for each type of question
+    # get question types
+    qa_data_test = test_loader.dataset.dataset_qa
+    qa_data_val = val_loader.dataset.dataset_qa
+    # i need to generate a dict, where each key is a question type and the value is a tensor where the first row is the answer and the second one is the probability
+    # i need to do this for the test and val set
+    # first, let's get a dict question_id to question_type
+    question_id_to_type_test = {e['question_id']:e['question_type'] for e in qa_data_test}
+    types_test = list(set(question_id_to_type_test.values()))
+    type2idx_test = {t:i for i,t in enumerate(types_test)}
+    question_id_to_type_val = {e['question_id']:e['question_type'] for e in qa_data_val}
+    types_val = list(set(question_id_to_type_val.values()))
+    type2idx_val = {t:i for i,t in enumerate(types_val)}
+    # dicts to store answers to get auc, acc and ap from
+    answers_group_test = {}
+    answers_group_val = {}   
+    typeidx_test = torch.zeros(len(results_test['answers']), dtype=torch.long)
+    typeidx_val = torch.zeros(len(results_val['answers']), dtype=torch.long)
+    for i in range(typeidx_test.shape[0]):
+        typeidx_test[i] = type2idx_test[question_id_to_type_test[results_test['results'][i,0].item()]]
+    for i in range(typeidx_val.shape[0]):
+        typeidx_val[i] = type2idx_val[question_id_to_type_val[results_val['results'][i,0].item()]]
+    # now for each type, get metrics
+    for k,v in type2idx_test.items():
+        answers_group_test[k] = results_test['answers'][typeidx_test==v]
+    for k,v in type2idx_val.items():
+        answers_group_val[k] = results_val['answers'][typeidx_val==v]
+    # now get metrics
+    printer.print_line()
+    # test
+    for k,v in answers_group_test.items():
+        auc_test, ap_test = metrics.compute_auc_ap(v)
+        print("AUC for test set, question type", k, "is", auc_test)
+        print("AP for test set, question type", k, "is", ap_test)
+    # val
+    for k,v in answers_group_val.items():
+        auc_val, ap_val = metrics.compute_auc_ap(v)
+        print("AUC for val set, question type", k, "is", auc_val)
+        print("AP for val set, question type", k, "is", ap_val)
+
 
 if __name__ == '__main__':
     main()
