@@ -95,13 +95,13 @@ def main():
     # test
     for k,v in answers_group_test.items():
         auc_test, ap_test = metrics.compute_auc_ap(v)
-        print("AUC for test set, question type", k, "is", auc_test)
-        print("AP for test set, question type", k, "is", ap_test)
+        print("AUC for test set, question type", k, "is", '{:.3f}'.format(auc_test))
+        print("AP for test set, question type", k, "is", '{:.3f}'.format(ap_test))
     # val
     for k,v in answers_group_val.items():
         auc_val, ap_val = metrics.compute_auc_ap(v)
-        print("AUC for val set, question type", k, "is", auc_val)
-        print("AP for val set, question type", k, "is", ap_val)
+        print("AUC for val set, question type", k, "is", '{:.2f}'.format(auc_val))
+        print("AP for val set, question type", k, "is", '{:.2f}'.format(ap_val))
 
 
 if __name__ == '__main__':
