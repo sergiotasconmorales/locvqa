@@ -100,3 +100,19 @@ def save_json(data, path):
 def read_json(path):
     with open(path, 'r') as f:
         return json.load(f)
+
+def read_pickle(path):
+    """Function to read a pickle file from the specified path
+
+    Parameters
+    ----------
+    path : str
+        path including format for pickle file
+
+    Returns
+    -------
+    list
+        data read from pickle file
+    """
+    with open(path, 'rb') as f:
+        return pickle.load(f)

@@ -20,14 +20,14 @@ from collections import Counter
 from plot import plotter
 
 
-path_base = '/home/sergio814/Documents/PhD/code/data/Tools/CholecVQA_v1'
+path_base = '/home/sergio814/Documents/PhD/code/data/Tools/CholecVQA_v3'
 path_output = jp(path_base, 'test_output')
 os.makedirs(path_output, exist_ok=True)
 path_qa = jp(path_base, 'qa')
 path_processed = jp(path_base, 'processed')
 path_images = jp(path_base, 'images')
 
-subset = 'val'
+subset = 'test'
 os.makedirs(jp(path_output, subset), exist_ok=True)
 n_examples = 50
 

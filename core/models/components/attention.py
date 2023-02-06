@@ -144,7 +144,7 @@ class AttentionMechanism_2(AttentionMechanismBase):
 
 
 class AttentionMechanism_3(AttentionMechanismBase):
-    """Attention mechanism for model VQARS_7 to include mask after softmax and then softmax only part that mask keeps"""
+    """Attention mechanism for model VQARS_7 to include mask after softmax"""
     def __init__(self, visual_features_size, question_feature_size, attention_middle_size, glimpses, fusion_method, drop=0.0):
         super().__init__(visual_features_size, question_feature_size, attention_middle_size, glimpses, fusion_method, drop=drop)
 

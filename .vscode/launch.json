@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "/home/sergio814/Documents/PhD/code/",
-            "args": ["--path_config", "locvqa/config/sts2017/config_001.yaml"]
+            "args": ["--path_config", "locvqa/config/cholec/config_010.yaml"]
             //"args": ["--path_config", "locvqa/config/dataset_creation/sts2017_v1.yaml"]
         }
     ]   
