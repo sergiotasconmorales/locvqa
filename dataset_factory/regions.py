@@ -14,6 +14,7 @@ import random
 from os.path import join as jp
 import numpy as np
 from . import qa_factory
+from .coco.PythonAPI.pycocotools.coco import COCO
 import copy
 
 class RegionsDatasetCreator(object):
@@ -154,7 +155,105 @@ class Cholec(RegionsDatasetCreator):
 
             io.save_json(qa, jp(self.path_qa_output, subset + '_qa.json'))
 
+class Insegcat(RegionsDatasetCreator):
+    # call parent class
+    def __init__(self, config):
+        super().__init__(config)
+        self.subsets = ['training', 'validation', 'test']
 
+    # overwrite build method for this dataset
+    def build(self):
+        # Steps
+        # 1. Organize data
+        self.preprocess_data()
+        # 2. Create dataset
+        self.create_dataset()
+        # 3. Process dataset
+        self.process_dataset()
+
+    # data preprocessing and organization
+    def preprocess_data(self):
+        # copy images from original folder to new folder. Also, generate mask files from annotations files using COCO API
+        for subset in tqdm(self.subsets, desc='Organizing data', colour='blue'):
+            os.makedirs(jp(self.path_images_orig, subset), exist_ok=True)
+            images_subset = os.listdir(jp(self.path_data, subset))
+            # create COCO object for current subset
+            coco = COCO(jp(self.path_data, subset + '.json'))
+            imgs = coco.imgs
+            name2id = {imgs[e]['file_name'] : e for e in imgs.keys()}
+            self.mask_code = {coco.cats[e]['id'] : coco.cats[e]['name'] for e in coco.cats.keys()}
+            for image in tqdm(images_subset, desc='Copying images ' + subset, colour='blue'):
+                if not os.path.exists(jp(self.path_images_orig, subset, image)) or self.config['overwrite_img']:
+                    shutil.copy(jp(self.path_data, subset, image), jp(self.path_images_orig, subset, image))
+                else:
+                    print("Skipping original image", image, "File exists and overwrite_img is set to False")
+                # now deal with the masks
+                # get image id
+                image_id = name2id[image]
+                # get annotations for current image
+                anns = coco.getAnnIds(imgIds=image_id)
+                anns = coco.loadAnns(anns)
+                # create mask
+                mask = np.zeros((coco.imgs[image_id]['height'], coco.imgs[image_id]['width']))
+                for ann in anns:
+                    mask += coco.annToMask(ann)*ann['category_id']
+                # save mask
+                if not os.path.exists(jp(self.path_images_orig, subset, image.replace('.png', '_mask.png'))) or self.config['overwrite_img']:
+                    io.save_image(mask.astype(np.uint8), jp(self.path_images_orig, subset, image.replace('.png', '_mask.png')))
+                else:
+                    print("Skipping mask image", image, "File exists or overwrite_img is set to False")
+
+        # now resize images from path_images_orig and store them in path_images_output
+        for subset in tqdm(self.subsets, desc='Resizing images', colour='yellow'):
+            os.makedirs(jp(self.path_images_output, subset), exist_ok=True)
+            images = [e for e in os.listdir(jp(self.path_images_orig, subset)) if 'mask' not in e]
+            for image in tqdm(images, desc='Resizing images ' + subset, colour='blue'):
+                if not os.path.exists(jp(self.path_images_output, subset, image)) or self.config['overwrite_img']:
+                    image_processing.resize_and_save(jp(self.path_images_orig, subset, image), jp(self.path_images_output, subset, image), size = self.config['size'])
+                else:
+                    print("Skipping resizing of image", image, "File exists and overwrite_img is set to False") 
+                
+    # create dataset
+    def create_dataset(self):
+        printer.print_section('Creating QA pairs')
+        # Now generate questions about regions and about whole images for each split
+        for subset in self.subsets:
+            if os.path.exists(jp(self.path_qa_output, subset + 'qa.json')) and not self.config['overwrite_qa']:
+                print("Skipping qa file", subset + '_qa.json', "File exists and overwrite_qa is set to False")
+                continue # if qa file exists and no overwrite is required, skip
+
+            qa = [] # to save QA entries
+
+            # list all images in current subset (original size)
+            images = [e for e in dirs.list_files(jp(self.path_images_orig, subset)) if 'mask' not in e]
+            # for each image, generate a set of questions about random regions, based on the labels that are present in the image (balanced)
+            print(subset, 'set...')
+            for i_image, image in enumerate(tqdm((images), desc='Creating QA pairs for ' + subset, colour='blue')):
+                # get mask
+                mask = image.replace('.png', '_mask.png')
+                # read image
+                img = io.read_image(jp(self.path_images_orig, subset, image))
+                # read mask
+                mask = io.read_image(jp(self.path_images_orig, subset, mask))
+
+                # get unique labels in mask
+                labels = [e for e in list(set(mask.flatten())) if e in set(self.mask_code.keys())]
+
+                # for each label, generate binary mask and then generate pairs of questions about regions
+                for l in labels:
+                    # create binary mask
+                    mask_bin = np.zeros_like(mask)
+                    mask_bin[mask == l] = 1
+                    # generate pairs of questions
+                    partial_qa_id = '1' +  str(l).zfill(2) + str(i_image+1).zfill(4)
+                    qa_pairs = qa_factory.generate_questions_about_regions(self.config, mask_bin, self.mask_code[l], partial_qa_id, image, balanced=True, dataset = 'insegcat')
+                    qa.extend(qa_pairs)
+
+                # no questions about whole images for this dataset
+                #qa_pairs = qa_factory.cholec_generate_questions_about_image(self.config, labels, self.mask_code, image, img.shape[0], img.shape[1], str(i_image+1).zfill(4))
+                #qa.extend(qa_pairs)
+
+            io.save_json(qa, jp(self.path_qa_output, subset + '_qa.json'))
 
 
 class STS2017(RegionsDatasetCreator):

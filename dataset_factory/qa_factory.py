@@ -106,7 +106,7 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
     if num_pixels_mask == 0:
         return [] # if there are no pixels in the mask, return empty list
 
-    if dataset == 'sts2017': # due to the shape of the tools, use bounding box
+    if dataset == 'sts2017' or dataset == 'insegcat': # due to the shape of the tools, use bounding box
         props = regionprops(mask_gt)
         # add the areas of all bounding boxes
         num_pixels_mask = 0
@@ -126,10 +126,6 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
         num_regions_recomputed = np.min([num_regions, np.max([config['min_regions'], int(-1*(2*(num_regions + (num_regions/2))/num_pixels_img)*(num_pixels_mask - num_pixels_img/2) + num_regions  + (num_regions/2) )])])
         if num_regions_recomputed%2 != 0: # make even so that half of the questions can be answered with yes and half with no
             num_regions_recomputed += 1
-
-
-        
-
 
 
     qa_group = []
