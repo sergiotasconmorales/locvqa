@@ -18,7 +18,6 @@ import pandas as pd
 import torchvision.transforms as T
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
-import cv2
 
 from misc import io
 from . import nlp
