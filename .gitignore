@@ -2,3 +2,5 @@
 *.pyc
 
 .vscode/
+
+dataset_factory/coco
