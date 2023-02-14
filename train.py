@@ -26,15 +26,19 @@ args = io.get_config_file_name()
 def main():
     # read config file
     config = io.read_config(args.path_config)
+    if 'draw_regions' in config:
+        draw_regions = config['draw_regions']
+    else:
+        draw_regions = False
 
     device = torch.device('cuda' if torch.cuda.is_available() and config['cuda'] else 'cpu')
 
-    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True) 
+    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True, draw_regions=draw_regions) 
 
     print('Num batches train: ', len(train_loader))
     print('Num samples train:', len(train_loader.dataset))
 
-    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False)
+    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False, draw_regions=draw_regions)
 
     print('Num batches val: ', len(val_loader))
     print('Num samples val:', len(val_loader.dataset))

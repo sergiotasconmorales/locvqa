@@ -15,12 +15,14 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import torchvision.transforms as T
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
+import cv2
 
 from misc import io
 from . import nlp
-
+from . import visual as vis
 
 
 class VQABase(Dataset):
@@ -94,10 +96,11 @@ class VQARegionsSingle(VQABase):
     VQABase : Parent class
         Base class for VQA dataset.
     """
-    def __init__(self, subset, config, dataset_visual):
+    def __init__(self, subset, config, dataset_visual, draw_regions=False):
         super().__init__(subset, config, dataset_visual)
         self.augment = config['augment']
         self.mask_as_text = config['mask_as_text']
+        self.draw_regions = draw_regions
 
     def transform(self, image, mask, size):
 
@@ -126,6 +129,23 @@ class VQARegionsSingle(VQABase):
         mask[mask_coords[0][0]:mask_coords[0][0]+mask_coords[1] , mask_coords[0][1]:mask_coords[0][1]+mask_coords[2]] = 1
         return mask.unsqueeze_(0)
 
+    def draw_region(self, img, coords, r=2):
+        ((y,x), h, w) = coords
+
+        for i in range(3):
+            img[i, y-r:y+h+r, x-r:x+r] = 0
+            img[i, y-r:y+r, x-r:x+w+r] = 0
+            img[i, y-r:y+h+r, x+w-r:x+w+r] = 0
+            img[i, y+h-r:y+h+r, x-r:x+w+r] = 0
+
+        # set red channel line to red
+        img[0, y-r:y+h+r, x-r:x+r] = 1
+        img[0, y-r:y+r, x-r:x+w+r] = 1
+        img[0, y-r:y+h+r, x+w-r:x+w+r] = 1
+        img[0, y+h-r:y+h+r, x-r:x+w+r] = 1
+
+        return img
+
     # override getitem method
     def __getitem__(self, index):
         sample = {}
@@ -135,6 +155,11 @@ class VQARegionsSingle(VQABase):
 
         # get visual
         visual = self.dataset_visual.get_by_name(item_qa['image_name'])['visual']
+        if self.draw_regions:
+            # first, apply inverse transform to get original image
+            visual = vis.default_inverse_transform()(visual)
+            visual = self.draw_region(visual, item_qa['mask_coords'])
+            visual = vis.default_transform(self.config['size'])(T.ToPILImage()(visual))
         mask = self.get_mask(item_qa['mask_coords'], item_qa['mask_size'])
 
         if self.augment:
@@ -177,10 +202,10 @@ class VQARegionsSingle(VQABase):
 
 
 
-def get_vqa_dataset(subset, config, dataset_visual):
+def get_vqa_dataset(subset, config, dataset_visual, draw_regions=False):
     # provides dataset class for current training config
     if config['dataset'] in ['cholec', 'sts2017', 'insegcat']:
-        dataset_vqa = VQARegionsSingle(subset, config, dataset_visual)
+        dataset_vqa = VQARegionsSingle(subset, config, dataset_visual, draw_regions=draw_regions)
     elif config['dataset'] == 'IDRID':
         raise NotImplementedError
     else:

@@ -12,13 +12,13 @@ import torch
 from . import visual, vqa, aux
 
 
-def get_vqa_loader(subset, config, shuffle=False):
+def get_vqa_loader(subset, config, shuffle=False, draw_regions=False):
 
     # create visual dataset for images
     dataset_visual = visual.get_visual_dataset(subset, config)
 
     # create vqa dataset for questions and answers
-    dataset_vqa = vqa.get_vqa_dataset(subset, config, dataset_visual)
+    dataset_vqa = vqa.get_vqa_dataset(subset, config, dataset_visual, draw_regions=draw_regions)
 
     dataloader = DataLoader(    dataset_vqa,
                                 batch_size = config['batch_size'],

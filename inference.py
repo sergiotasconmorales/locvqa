@@ -23,12 +23,17 @@ def main():
     config['train_from'] = 'best' # set this parameter to best so that best model is loaded for validation part
     config['comet_ml'] = False
 
+    if 'draw_regions' in config:
+        draw_regions = config['draw_regions']
+    else:
+        draw_regions = False
+
     device = torch.device('cuda' if torch.cuda.is_available() and config['cuda'] else 'cpu')
 
     # get loaders
-    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True) 
-    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False)
-    test_loader = loaders_factory.get_vqa_loader('test', config, shuffle=False)
+    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True, draw_regions=draw_regions) 
+    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False, draw_regions=draw_regions)
+    test_loader = loaders_factory.get_vqa_loader('test', config, shuffle=False, draw_regions=draw_regions)
     
     # get model
     model = model_factory.get_vqa_model(config, vocab_words, vocab_answers)

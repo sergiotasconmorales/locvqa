@@ -43,7 +43,7 @@ class VQA_Base(nn.Module):
         self.classifer = classification.get_classfier(fused_size, config)
 
 
-    def forward(self, v, q):
+    def forward(self, v, q, m): #* For simplicity, VQA_Base receives the mask as an input, but it is not used
         # if required, extract visual features from visual input 
         if not self.pre_visual:
             v = self.image(v) # [B, 2048, 14, 14]
