@@ -350,6 +350,92 @@ class VQA_LocalizedAttention(VQA_Base):
 
         return x
 
+class VQARS_8(VQA_Base):
+    # Model that requires attention. Mask is used to mask the attention maps of the attention mechanism. 
+    # A.k.a. VQARS_7
+    def __init__(self, config, vocab_words, vocab_answers):
+        if not config['attention']:
+            raise ValueError("This model requires attention. Please set <attention> to True in the config file")
+
+        # call mom
+        super().__init__(config, vocab_words, vocab_answers)
+
+        # replace attention mechanism
+        self.attention_mechanism = attention.get_attention_mechanism(config, special='Att5')
+
+    # override forward method to accept mask
+    def forward(self, v, q, m):
+        # if required, extract visual features from visual input 
+        if not self.pre_visual:
+            v = self.image(v) 
+
+        # l2 norm
+        v = v / (v.norm(p=2, dim=1, keepdim=True).expand_as(v) + 1e-8)
+
+        # extract text features
+        q = self.text(q)
+
+        # resize mask
+        m = transforms.Resize(14)(m) #should become size (B,1,14,14)
+        m = m.view(m.size(0),-1, 14*14) # [B,1,196]
+
+        # if required, apply attention
+        if self.use_attention:
+            v = self.attention_mechanism(v, m, q) 
+        else:
+            raise ValueError("This model requires attention")
+
+        # apply multimodal fusion
+        fused = self.fuser(v, q)
+
+        # apply MLP
+        x = self.classifer(fused)
+
+        return x
+
+
+class VQARS_9(VQA_Base):
+    # Model that requires attention. Mask is used to mask the attention maps of the attention mechanism. 
+    # A.k.a. VQARS_7
+    def __init__(self, config, vocab_words, vocab_answers):
+        if not config['attention']:
+            raise ValueError("This model requires attention. Please set <attention> to True in the config file")
+
+        # call mom
+        super().__init__(config, vocab_words, vocab_answers)
+
+        # replace attention mechanism
+        self.attention_mechanism = attention.get_attention_mechanism(config, special='Att6')
+
+    # override forward method to accept mask
+    def forward(self, v, q, m):
+        # if required, extract visual features from visual input 
+        if not self.pre_visual:
+            v = self.image(v) 
+
+        # l2 norm
+        v = v / (v.norm(p=2, dim=1, keepdim=True).expand_as(v) + 1e-8)
+
+        # extract text features
+        q = self.text(q)
+
+        # resize mask
+        m = transforms.Resize(14)(m) #should become size (B,1,14,14)
+        m = m.view(m.size(0),-1, 14*14) # [B,1,196]
+
+        # if required, apply attention
+        if self.use_attention:
+            v = self.attention_mechanism(v, m, q) 
+        else:
+            raise ValueError("This model requires attention")
+
+        # apply multimodal fusion
+        fused = self.fuser(v, q)
+
+        # apply MLP
+        x = self.classifer(fused)
+
+        return x
 
 class VQA_LocalizedAttentionScale(VQA_Base):
     # Model that requires attention. Mask is used to mask the attention maps of the attention mechanism. 
