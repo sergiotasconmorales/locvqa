@@ -31,6 +31,10 @@ class VQABase(Dataset):
         self.dataset_visual = dataset_visual
         self.path_annotations_and_questions = jp(config['path_data'], 'qa')
         self.path_processed = jp(config['path_data'], 'processed')
+        if 'mask_as_text' in config:
+            self.mask_as_text = config['mask_as_text']
+        else:
+            self.mask_as_text = False
         if not os.path.exists(self.path_processed) or len(os.listdir(self.path_processed))<1 or (subset == 'train' and config['process_qa_again']):
             self.pre_process_qa() # pre-process qa, produce pickle files
 
@@ -98,7 +102,6 @@ class VQARegionsSingle(VQABase):
     def __init__(self, subset, config, dataset_visual, draw_regions=False):
         super().__init__(subset, config, dataset_visual)
         self.augment = config['augment']
-        self.mask_as_text = config['mask_as_text']
         self.draw_regions = draw_regions
 
     def transform(self, image, mask, size):
@@ -171,10 +174,8 @@ class VQARegionsSingle(VQABase):
         sample['question_id'] = item_qa['question_id']
 
         # if mask should be included in the questions
-        if self.mask_as_text:
-            sample['question'] = torch.LongTensor(item_qa['question_word_indexes_alt']) # question with location as text
-        else:  
-            sample['question'] = torch.LongTensor(item_qa['question_word_indexes'])
+
+        sample['question'] = torch.LongTensor(item_qa['question_word_indexes'])
 
         # get answer
         sample['answer'] = item_qa['answer_index']
@@ -189,7 +190,13 @@ class VQARegionsSingle(VQABase):
         data_val = json.load(open(jp(self.path_annotations_and_questions, 'val_qa.json'), 'r'))
         data_test = json.load(open(jp(self.path_annotations_and_questions, 'test_qa.json'), 'r'))
 
-        sets, maps = nlp.process_qa(self.config, data_train, data_val, data_test)
+        if self.mask_as_text:   
+            # exchange question_alt to question
+            for data in tqdm([data_train, data_val, data_test], desc='mask_as_text is set to True, therefore alt questions are used'):
+                for item in data:
+                    item['question'], item['question_alt'] = item['question_alt'], item['question']
+
+        sets, maps = nlp.process_qa(self.config, data_train, data_val, data_test, alt_questions=self.mask_as_text)
 
         # define paths to save pickle files
         if not os.path.exists(self.path_processed):

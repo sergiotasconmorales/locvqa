@@ -30,7 +30,11 @@ def get_attention_mechanism(config, special=None):
     elif special == 'Att4':
         attention = AttentionMechanism_4(visual_features_size, question_feature_size, attention_middle_size, number_of_glimpses, attention_fusion, drop=dropout_attention)
     elif special == 'Att5':
-        attention = AttentionMechanism_5(visual_features_size, question_feature_size, attention_middle_size, number_of_glimpses, attention_fusion, drop=dropout_attention)
+        if 'attenuation_factor' in config:
+            attenuation_factor = config['attenuation_factor']
+        else:
+            print('Using default attenuation factor of 0.1')
+        attention = AttentionMechanism_5(visual_features_size, question_feature_size, attention_middle_size, number_of_glimpses, attention_fusion, drop=dropout_attention, attenuation_factor=attenuation_factor)
     elif special == 'Att6':
         attention = AttentionMechanism_6(visual_features_size, question_feature_size, attention_middle_size, number_of_glimpses, attention_fusion, drop=dropout_attention)
     return attention
@@ -236,8 +240,9 @@ class AttentionMechanism_4(AttentionMechanismBase):
 
 class AttentionMechanism_5(AttentionMechanismBase):
     """Same as AttentionMechanism_3 but instead of masking, magnify inside of the region and attenuate outside"""
-    def __init__(self, visual_features_size, question_feature_size, attention_middle_size, glimpses, fusion_method, drop=0.0):
+    def __init__(self, visual_features_size, question_feature_size, attention_middle_size, glimpses, fusion_method, drop=0.0, attenuation_factor = 0.1):
         super().__init__(visual_features_size, question_feature_size, attention_middle_size, glimpses, fusion_method, drop=drop)
+        self.attenuation_factor = attenuation_factor
 
     # same as general function above but receiving mask and applying it before the softmax
     def apply_attention(self, visual_features, attention, mask):
@@ -250,7 +255,7 @@ class AttentionMechanism_5(AttentionMechanismBase):
         attention = attention.view(b, glimpses, -1) # vectorize attention maps [b, glimpses, k*k]
         attention = F.softmax(attention, dim = -1) # [b, glimpses, k*k]
         not_mask = torch.max(mask) - mask
-        attention = attention*mask + attention*not_mask*0.1 
+        attention = attention*mask + attention*not_mask*self.attenuation_factor
         attention.unsqueeze_(2)
         attended = attention*visual_features # use broadcasting to weight the feature maps
         attended = attended.sum(dim=-1) # sum in the spatial dimension [b, glimpses, m]
