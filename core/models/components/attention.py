@@ -292,8 +292,11 @@ class AttentionMechanism_6(AttentionMechanismBase):
         visual_features = visual_features.view(b, 1, m, -1) # vectorize feature maps [b, 1, m, k*k]
         attention = attention.view(b, glimpses, -1) # vectorize attention maps [b, glimpses, k*k]
         attention = F.softmax(attention, dim = -1) # [b, glimpses, k*k]
+        attention_g1 = attention[:, 0, :]
+        attention = attention*mask
+        attention[:, 0, :] = attention_g1
         # now apply mask to only one glimpse, leave the other glimpses untouched
-        attention[:, 0, :] = (attention[:, 0, :].unsqueeze(1)*mask).squeeze(1)
+        #attention[:, 0, :] = (attention[:, 0, :].unsqueeze(1)*mask).squeeze(1)
         attention.unsqueeze_(2)
         attended = attention*visual_features # use broadcasting to weight the feature maps
         attended = attended.sum(dim=-1) # sum in the spatial dimension [b, glimpses, m]
