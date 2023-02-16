@@ -15,9 +15,11 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+from PIL import Image, ImageDraw
 import torchvision.transforms as T
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
+from copy import deepcopy
 
 from misc import io
 from . import nlp
@@ -127,26 +129,42 @@ class VQARegionsSingle(VQABase):
         return image, mask
 
     def get_mask(self, mask_coords, mask_size):
-        mask = torch.zeros(mask_size, dtype=torch.uint8)
-        mask[mask_coords[0][0]:mask_coords[0][0]+mask_coords[1] , mask_coords[0][1]:mask_coords[0][1]+mask_coords[2]] = 1
+        # mask_coords has the format ((y,x), h, w)
+        if self.config['dataset'] == 'dme': # requires ellipse regions
+            mask_ref = Image.new('L', mask_size, 0)
+            mask = ImageDraw.Draw(mask_ref)
+            mask.ellipse([(mask_coords[0][1], mask_coords[0][0]),(mask_coords[0][1] + mask_coords[2], mask_coords[0][0] + mask_coords[1])], fill=1)
+            mask = torch.from_numpy(np.array(mask_ref))
+        else:
+            mask = torch.zeros(mask_size, dtype=torch.uint8)
+            mask[mask_coords[0][0]:mask_coords[0][0]+mask_coords[1] , mask_coords[0][1]:mask_coords[0][1]+mask_coords[2]] = 1
         return mask.unsqueeze_(0)
 
     def draw_region(self, img, coords, r=2):
-        ((y,x), h, w) = coords
+        if self.config['dataset'] == 'dme': # requires ellipse regions
+            img_ref = deepcopy(img)
+            ((y,x), h, w) = coords
+            draw = ImageDraw.Draw(img_ref)
+            draw.ellipse([(x, y),(x + w, y + h)], outline='red')
+            img_ref = np.array(img_ref)
+            img_ref = img_ref.transpose(2,0,1)
+            img_ref = torch.from_numpy(img_ref)
+            return img_ref
+        else:
+            ((y,x), h, w) = coords
 
-        for i in range(3):
-            img[i, y-r:y+h+r, x-r:x+r] = 0
-            img[i, y-r:y+r, x-r:x+w+r] = 0
-            img[i, y-r:y+h+r, x+w-r:x+w+r] = 0
-            img[i, y+h-r:y+h+r, x-r:x+w+r] = 0
+            for i in range(3):
+                img[i, y-r:y+h+r, x-r:x+r] = 0
+                img[i, y-r:y+r, x-r:x+w+r] = 0
+                img[i, y-r:y+h+r, x+w-r:x+w+r] = 0
+                img[i, y+h-r:y+h+r, x-r:x+w+r] = 0
 
-        # set red channel line to red
-        img[0, y-r:y+h+r, x-r:x+r] = 1
-        img[0, y-r:y+r, x-r:x+w+r] = 1
-        img[0, y-r:y+h+r, x+w-r:x+w+r] = 1
-        img[0, y+h-r:y+h+r, x-r:x+w+r] = 1
-
-        return img
+            # set red channel line to red
+            img[0, y-r:y+h+r, x-r:x+r] = 1
+            img[0, y-r:y+r, x-r:x+w+r] = 1
+            img[0, y-r:y+h+r, x+w-r:x+w+r] = 1
+            img[0, y+h-r:y+h+r, x-r:x+w+r] = 1
+            return img
 
     # override getitem method
     def __getitem__(self, index):
@@ -210,7 +228,7 @@ class VQARegionsSingle(VQABase):
 
 def get_vqa_dataset(subset, config, dataset_visual, draw_regions=False):
     # provides dataset class for current training config
-    if config['dataset'] in ['cholec', 'sts2017', 'insegcat']:
+    if config['dataset'] in ['cholec', 'sts2017', 'insegcat', 'dme']:
         dataset_vqa = VQARegionsSingle(subset, config, dataset_visual, draw_regions=draw_regions)
     elif config['dataset'] == 'IDRID':
         raise NotImplementedError

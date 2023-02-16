@@ -56,7 +56,7 @@ def save_image(image, path):
 
 def read_weights(config):
     # Function to read (class) weights that come from the answer distribution and were previously computed using compute_answer_weights.py
-    path_weights = jp(config['path_qa'], 'answer_weights', 'w.pt')
+    path_weights = jp(config['path_data'], 'answer_weights', 'w.pt')
     if not os.path.exists(path_weights):
         raise FileNotFoundError
     weights = torch.load(path_weights)

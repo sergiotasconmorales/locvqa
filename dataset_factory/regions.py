@@ -15,7 +15,10 @@ from os.path import join as jp
 import numpy as np
 from . import qa_factory
 from .coco.PythonAPI.pycocotools.coco import COCO
+from skimage.measure import regionprops
 import copy
+
+PENDING = 0
 
 class RegionsDatasetCreator(object):
     # define init
@@ -494,3 +497,77 @@ class STS2017(RegionsDatasetCreator):
     def process_dataset(self):
         pass
         self.built_success = True
+
+
+
+class DME(object):
+    # Class to convert DME data to format of RIS-VQA and INSEGCAT-VQA datasets
+    def __init__(self, config):
+        self.path_dme_orig = config['path_orig']
+        self.path_qa = jp(self.path_dme_orig, 'qa')
+        self.path_images = jp(self.path_dme_orig, 'visual')
+        self.path_masks = jp(self.path_dme_orig, 'masks')
+        self.path_dme_output = config['path_output']
+        os.makedirs(self.path_dme_output, exist_ok=True)
+        dirs.create_folders_within_folder(self.path_dme_output, ['images', 'qa'])
+        self.subsets = ['train', 'val', 'test']
+        self.dict_question_types = {'whole': 'whole', 'inside':'region', 'grade': 'grade', 'fovea': 'macula'}
+
+        self.objects = {'hard exudates': 'he', 'optic discs': 'od', 'grade': 'grade'}
+
+        self.success = False
+
+    def print_details(self):
+        print('DME dataset')
+        print('Original data path:', self.path_dme_orig)
+        print('Output data path:', self.path_dme_output)
+
+    def build(self):
+        # here is where the conversion occurs
+        # for each subset, read the json file
+        for subset in self.subsets:
+            os.makedirs(jp(self.path_dme_output, 'images', subset), exist_ok=True)
+            qa_group = []
+            # read json file
+            qa = io.read_json(jp(self.path_qa, subset + 'qa.json'))
+            # now for each qa pair, create a new entry with the following structure:
+            for entry in tqdm(qa, desc='Processing ' + subset + ' set', colour='blue'):
+                # open mask
+                mask = io.read_image(jp(self.path_masks, subset, 'maskA', entry['mask_name']))
+                props = regionprops(mask)
+                assert len(props) == 1, 'There should be only one region in the mask'
+                # get bounding box
+                miny, minx, maxy, maxx = props[0].bbox
+                if miny == 0 and minx == 0 and maxy == mask.shape[0] and maxx == mask.shape[1]:
+                    # whole image
+                    question_alt = entry['question']
+                    mask_coords = ((0, 0), mask.shape[0], mask.shape[1])
+                else:
+                    assert entry['question_type'] == 'inside', 'Question type should be inside'
+                    question_alt = entry['question'].replace('in this region', 'in the ellipse contained in the bounding box ({}, {}, {}, {})'.format(miny, minx, maxy, maxx))
+                    mask_coords = ((miny, minx), maxy-miny, maxx-minx)
+                qa_group.append({
+                                    'image_name': entry['image_name'],
+                                    'question': entry['question'],
+                                    'question_alt': question_alt,
+                                    'question_id': entry['question_id'],
+                                    'question_type': self.dict_question_types[entry['question_type']],
+                                    'mask_coords': mask_coords, #(top_left_resized, window_h_resized, window_w_resized),
+                                    'mask_coords_orig': None,
+                                    'answer': entry['answer'],
+                                    'mask_size': (mask.shape[0], mask.shape[1]),
+                                    'mask_size_orig': None, # not necessary for DME
+                                    'question_object': self.dict_question_types[entry['question_type']]
+                })
+                # copy image using shutil if it wasn't copied before
+                if not os.path.exists(jp(self.path_dme_output, 'images', subset, entry['image_name'])):
+                    shutil.copy(jp(self.path_images, subset, entry['image_name']), jp(self.path_dme_output, 'images', subset, entry['image_name']))
+            # save qa_group
+            io.save_json(qa_group, jp(self.path_dme_output, 'qa', subset + '_qa.json'))
+        self.success = True
+
+    def created_successfully(self):
+        if self.success:
+            print('Dataset was created successfully.')
+        else:
+            print('Dataset was not created successfully.')
