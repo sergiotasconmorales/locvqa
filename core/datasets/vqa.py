@@ -142,7 +142,7 @@ class VQARegionsSingle(VQABase):
 
     def draw_region(self, img, coords, r=2):
         if self.config['dataset'] == 'dme': # requires ellipse regions
-            img_ref = deepcopy(img)
+            img_ref = T.ToPILImage()(img)
             ((y,x), h, w) = coords
             draw = ImageDraw.Draw(img_ref)
             draw.ellipse([(x, y),(x + w, y + h)], outline='red')
