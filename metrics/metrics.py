@@ -20,6 +20,8 @@ def vqa_accuracy(predicted, true):
 
     return torch.min(agreement*0.3, torch.ones_like(agreement)).float().sum() # returning batch sum
 
+def accuracy(pred, gt):
+    return torch.eq(pred, gt).sum()/pred.shape[0]
 
 def batch_strict_accuracy(predicted, true):
     # in this case true is a [B] tensor with the answers 
