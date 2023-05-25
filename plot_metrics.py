@@ -95,6 +95,41 @@ def main():
         print('Overall accuracy: {:.2f}'.format(100*torch.eq(all_types[:,0], all_types[:,1]).sum()/all_types.shape[0]))
         print('*'*50)
 
+        # do exactly the same for test set
+        path_test_answers_file = jp(path_logs, 'answers', 'answers_epoch_test.pt')
+        if not os.path.exists(path_test_answers_file):
+            raise Exception("Test set answers haven't been generated with inference.py")
+        answers_test = torch.load(path_test_answers_file, map_location=torch.device('cpu'))
+        id2pred = {answers_test[i,0].item(): answers_test[i,1].item() for i in range(answers_test.shape[0])}
+        # open qa file to get question types
+        path_qa_file_test = jp(config['path_data'], 'processed', 'testset.pickle')
+        with open(path_qa_file_test, 'rb') as f:
+            qa_test = pickle.load(f)
+        # add prediction to qa_val
+        for q in qa_test:
+            q['prediction'] = id2pred[q['question_id']]
+        # group questions by type
+        types_counts = Counter([e['question_type'] for e in qa_test]).most_common()
+        question_types = {e[0]:e[1] for e in types_counts}
+        indexes_types = {e[0]:0 for e in types_counts}
+        groups_type = {k:torch.zeros((v,2)) for k,v in question_types.items()}
+        all_types = torch.zeros((len(qa_test),2))
+        # fill groups_type with targets and predictions
+        for i, q in enumerate(qa_test):
+            groups_type[q['question_type']][indexes_types[q['question_type']],0] = q['answer_index']
+            groups_type[q['question_type']][indexes_types[q['question_type']],1] = q['prediction']
+            indexes_types[q['question_type']] += 1
+            all_types[i,0] = q['answer_index']
+            all_types[i,1] = q['prediction']
+        # compute accuracy for each type
+        accuracies = {k:torch.eq(v[:,0], v[:,1]).sum()/v.shape[0] for k,v in groups_type.items()}
+        # print accuracies
+        print('Test accuracies by type:')
+        for k,v in accuracies.items():
+            print(f'{k}: {100*v:.2f}')
+        print('Overall accuracy: {:.2f}'.format(100*torch.eq(all_types[:,0], all_types[:,1]).sum()/all_types.shape[0]))
+        print('*'*50)
+
 
 if __name__ == '__main__':
     main()

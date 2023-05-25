@@ -166,6 +166,16 @@ class VQARegionsSingle(VQABase):
             img[0, y+h-r:y+h+r, x-r:x+w+r] = 1
             return img
 
+    def get_by_question_id(self, question_id):
+        for i in range(len(self.dataset_qa)):
+            if self.dataset_qa[i]['question_id'] == question_id:
+                return self.__getitem__(i)
+
+    def regenerate(self, question_ids):
+        # reduce self.dataset_qa to only contain question_ids
+        temp = [item for item in self.dataset_qa if item['question_id'] in question_ids]
+        self.dataset_qa = temp
+
     # override getitem method
     def __getitem__(self, index):
         sample = {}
