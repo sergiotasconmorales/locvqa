@@ -144,6 +144,10 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
 
         num_pixels_in_region = np.count_nonzero(mask_gt*mask_region)
 
+        # if threshold parameter should be treated as a percentage of the region, then compute it
+        if config['threshold_as_percentage']:
+            threshold = int(config['threshold']*np.count_nonzero(mask_region)/100)
+
         if (num_pixels_in_region >= threshold) and num_questions_yes < round(num_regions_recomputed/2): # if answer is yes and i haven't reached the maximum number of positive questions
             answer = 'yes'
             question_linked_to_region_mask = ('is there ' + class_name + ' in this region?').lower()

@@ -1,6 +1,6 @@
 dataset: STS2017
 path_data: /home/sergio814/Documents/PhD/code/data/Tools/STS2017
-path_output: /home/sergio814/Documents/PhD/code/data/Tools/STS2017_v1
+path_output: /home/sergio814/Documents/PhD/code/data/Tools/STS2017_v4
 
 # options for image preparation (pre-processing)
 overwrite_img: False
@@ -11,7 +11,7 @@ overwrite_qa: True # whether or not QA file should be overwritten
 num_regions: 10 # how many regions to generate for each class of each image. Half of them are generated to have answer No and half with answer Yes. Should be an even number
 min_regions: 4 # minimum number of regions to be generated when segmentation region is too big or too small. Should be an even number
 
-threshold: 1
+threshold: 10
 threshold_as_percentage: False
 min_window_side: 150
 max_window_side: 512

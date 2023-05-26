@@ -12,6 +12,7 @@ num_regions: 6 # how many regions to generate for each class of each image. Half
 min_regions: 2 # minimum number of regions to be generated when segmentation region is too big or too small. Should be an even number
 
 threshold: 1
+threshold_as_percentage: False
 min_window_side: 80
 max_window_side: 240
 proportion_deviation: 0.2 # deviation around one for the windows 
