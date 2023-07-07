@@ -488,8 +488,8 @@ class STS2017(RegionsDatasetCreator):
                 qa_pairs = qa_factory.generate_questions_about_regions(self.config, mask_bin, 'any tool or instrument', partial_qa_id, image, balanced=True, dataset='sts2017')
 
                 # questions about whole image - is there [tool] in this region?
-                qa_pairs = qa_factory.generate_questions_about_image(self.config, labels, mapping_index2tool_no_other, image, img.shape[0], img.shape[1], str(i_image+1).zfill(4))
-                qa.extend(qa_pairs)
+                #qa_pairs = qa_factory.generate_questions_about_image(self.config, labels, mapping_index2tool_no_other, image, img.shape[0], img.shape[1], str(i_image+1).zfill(4))
+                #qa.extend(qa_pairs)
 
             io.save_json(qa, jp(self.path_qa_output, subset + '_qa.json'))
 
