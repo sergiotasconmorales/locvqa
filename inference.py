@@ -23,12 +23,17 @@ def main():
     config['train_from'] = 'best' # set this parameter to best so that best model is loaded for validation part
     config['comet_ml'] = False
 
+    if 'draw_regions' in config:
+        draw_regions = config['draw_regions']
+    else:
+        draw_regions = False
+
     device = torch.device('cuda' if torch.cuda.is_available() and config['cuda'] else 'cpu')
 
     # get loaders
-    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True) 
-    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False)
-    test_loader = loaders_factory.get_vqa_loader('test', config, shuffle=False)
+    train_loader, vocab_words, vocab_answers, index_unk_answer = loaders_factory.get_vqa_loader('train', config, shuffle=True, draw_regions=draw_regions) 
+    val_loader = loaders_factory.get_vqa_loader('val', config, shuffle=False, draw_regions=draw_regions)
+    test_loader = loaders_factory.get_vqa_loader('test', config, shuffle=False, draw_regions=draw_regions)
     
     # get model
     model = model_factory.get_vqa_model(config, vocab_words, vocab_answers)
@@ -95,13 +100,31 @@ def main():
     # test
     for k,v in answers_group_test.items():
         auc_test, ap_test = metrics.compute_auc_ap(v)
-        print("AUC for test set, question type", k, "is", auc_test)
-        print("AP for test set, question type", k, "is", ap_test)
+        print("AUC for test set, question type", k, "is", '{:.3f}'.format(auc_test))
+        print("AP for test set, question type", k, "is", '{:.3f}'.format(ap_test))
     # val
     for k,v in answers_group_val.items():
         auc_val, ap_val = metrics.compute_auc_ap(v)
-        print("AUC for val set, question type", k, "is", auc_val)
-        print("AP for val set, question type", k, "is", ap_val)
+        print("AUC for val set, question type", k, "is", '{:.2f}'.format(auc_val))
+        print("AP for val set, question type", k, "is", '{:.2f}'.format(ap_val))
+
+    printer.print_line()
+    if not 'question_object' in qa_data_test[0]: return
+    # get results for each question object
+    # get object types
+    question_id_to_qobject_test = {e['question_id']:e['question_object'] for e in qa_data_test}
+    qobjects_test = list(set(question_id_to_qobject_test.values()))
+    qobject2idx_test = {t:i for i,t in enumerate(qobjects_test)}
+    answers_group_test = {}
+    qobjectidx_test = torch.zeros(len(results_test['answers']), dtype=torch.long)
+    for i in range(qobjectidx_test.shape[0]):
+        qobjectidx_test[i] = qobject2idx_test[question_id_to_qobject_test[results_test['results'][i,0].item()]]
+    for k,v in qobject2idx_test.items():
+        answers_group_test[k] = results_test['answers'][qobjectidx_test==v]
+    for k,v in answers_group_test.items():
+        auc_test, ap_test = metrics.compute_auc_ap(v)
+        print("AUC for test set, question object", k, "is", '{:.3f}'.format(auc_test))
+        print("AP for test set, question object", k, "is", '{:.3f}'.format(ap_test))
 
 
 if __name__ == '__main__':

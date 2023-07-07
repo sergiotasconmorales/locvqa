@@ -78,5 +78,6 @@ def overlay_mask(img, mask, gt, save= False, path_without_ext=None, alpha = 0.7,
     ax.axis('off')
     if save:
         plt.savefig(path_without_ext + '.png', bbox_inches='tight')
+        plt.close()
     else:
         plt.show()

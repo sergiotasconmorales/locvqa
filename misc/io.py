@@ -56,7 +56,7 @@ def save_image(image, path):
 
 def read_weights(config):
     # Function to read (class) weights that come from the answer distribution and were previously computed using compute_answer_weights.py
-    path_weights = jp(config['path_qa'], 'answer_weights', 'w.pt')
+    path_weights = jp(config['path_data'], 'answer_weights', 'w.pt')
     if not os.path.exists(path_weights):
         raise FileNotFoundError
     weights = torch.load(path_weights)
@@ -100,3 +100,19 @@ def save_json(data, path):
 def read_json(path):
     with open(path, 'r') as f:
         return json.load(f)
+
+def read_pickle(path):
+    """Function to read a pickle file from the specified path
+
+    Parameters
+    ----------
+    path : str
+        path including format for pickle file
+
+    Returns
+    -------
+    list
+        data read from pickle file
+    """
+    with open(path, 'rb') as f:
+        return pickle.load(f)

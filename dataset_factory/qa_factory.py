@@ -106,7 +106,7 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
     if num_pixels_mask == 0:
         return [] # if there are no pixels in the mask, return empty list
 
-    if dataset == 'sts2017': # due to the shape of the tools, use bounding box
+    if dataset == 'sts2017' or dataset == 'insegcat': # due to the shape of the tools, use bounding box
         props = regionprops(mask_gt)
         # add the areas of all bounding boxes
         num_pixels_mask = 0
@@ -128,10 +128,6 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
             num_regions_recomputed += 1
 
 
-        
-
-
-
     qa_group = []
     i_region = 0 # region index for current image
     num_questions_yes = 0
@@ -147,6 +143,10 @@ def generate_questions_about_regions(config, mask_gt, class_name, partial_qa_id,
         mask_region[top_left[0]:top_left[0]+window_h, top_left[1]:top_left[1]+window_w] = 1 # * Important: to be used like this in dataset class to create the mask, but setting it to 255
 
         num_pixels_in_region = np.count_nonzero(mask_gt*mask_region)
+
+        # if threshold parameter should be treated as a percentage of the region, then compute it
+        if config['threshold_as_percentage']:
+            threshold = int(config['threshold']*np.count_nonzero(mask_region)/100)
 
         if (num_pixels_in_region >= threshold) and num_questions_yes < round(num_regions_recomputed/2): # if answer is yes and i haven't reached the maximum number of positive questions
             answer = 'yes'

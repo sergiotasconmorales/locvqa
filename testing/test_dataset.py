@@ -20,15 +20,16 @@ from collections import Counter
 from plot import plotter
 
 
-path_base = '/home/sergio814/Documents/PhD/code/data/Tools/CholecVQA_v1'
+path_base = '/home/sergio814/Documents/PhD/code/data/Tools/INSEGCAT_v1'
 path_output = jp(path_base, 'test_output')
 os.makedirs(path_output, exist_ok=True)
 path_qa = jp(path_base, 'qa')
 path_processed = jp(path_base, 'processed')
 path_images = jp(path_base, 'images')
 
-subset = 'train'
-n_examples = 100
+subset = 'test'
+os.makedirs(jp(path_output, subset), exist_ok=True)
+n_examples = 50
 
 # load questions
 path_questions = jp(path_qa, subset + '_qa.json')
@@ -71,10 +72,10 @@ for i in range(n_examples):
     fig, ax = plt.subplots()
     plt.title(example['question'] + ' ' + example['answer'])
     # compare information from qa and processed_qa
-    print('Question qa:', example['question'], 'Question processed_qa:', processed_example['question'])
-    print('Image name qa:', example['image_name'], 'Image name processed_qa:', processed_example['image_name'])
-    print('Answer qa:', example['answer'], 'Answer processed_qa:', processed_example['answer'])
-    print('Mask coords qa:', example['mask_coords'], 'Mask coords processed_qa:', processed_example['mask_coords'])
-    print('Mask size qa:', example['mask_size'], 'Mask size processed_qa:', processed_example['mask_size'])
-    plotter.overlay_mask(image, mask, mask, alpha = 0.3, save = True, path_without_ext=jp(path_output, str(i).zfill(3)), ax=ax, fig = fig)
+    # print('Question qa:', example['question'], 'Question processed_qa:', processed_example['question'])
+    # print('Image name qa:', example['image_name'], 'Image name processed_qa:', processed_example['image_name'])
+    # print('Answer qa:', example['answer'], 'Answer processed_qa:', processed_example['answer'])
+    # print('Mask coords qa:', example['mask_coords'], 'Mask coords processed_qa:', processed_example['mask_coords'])
+    # print('Mask size qa:', example['mask_size'], 'Mask size processed_qa:', processed_example['mask_size'])
+    plotter.overlay_mask(image, mask, mask, alpha = 0.3, save = True, path_without_ext=jp(path_output, subset, str(i).zfill(3) + '_' + str(id_example)), ax=ax, fig = fig)
 

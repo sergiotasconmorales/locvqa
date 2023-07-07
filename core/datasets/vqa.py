@@ -15,12 +15,15 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+from PIL import Image, ImageDraw
+import torchvision.transforms as T
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
+from copy import deepcopy
 
 from misc import io
 from . import nlp
-
+from . import visual as vis
 
 
 class VQABase(Dataset):
@@ -30,6 +33,10 @@ class VQABase(Dataset):
         self.dataset_visual = dataset_visual
         self.path_annotations_and_questions = jp(config['path_data'], 'qa')
         self.path_processed = jp(config['path_data'], 'processed')
+        if 'mask_as_text' in config:
+            self.mask_as_text = config['mask_as_text']
+        else:
+            self.mask_as_text = False
         if not os.path.exists(self.path_processed) or len(os.listdir(self.path_processed))<1 or (subset == 'train' and config['process_qa_again']):
             self.pre_process_qa() # pre-process qa, produce pickle files
 
@@ -94,10 +101,10 @@ class VQARegionsSingle(VQABase):
     VQABase : Parent class
         Base class for VQA dataset.
     """
-    def __init__(self, subset, config, dataset_visual):
+    def __init__(self, subset, config, dataset_visual, draw_regions=False):
         super().__init__(subset, config, dataset_visual)
         self.augment = config['augment']
-        self.mask_as_text = config['mask_as_text']
+        self.draw_regions = draw_regions
 
     def transform(self, image, mask, size):
 
@@ -122,9 +129,52 @@ class VQARegionsSingle(VQABase):
         return image, mask
 
     def get_mask(self, mask_coords, mask_size):
-        mask = torch.zeros(mask_size, dtype=torch.uint8)
-        mask[mask_coords[0][0]:mask_coords[0][0]+mask_coords[1] , mask_coords[0][1]:mask_coords[0][1]+mask_coords[2]] = 1
+        # mask_coords has the format ((y,x), h, w)
+        if self.config['dataset'] == 'dme': # requires ellipse regions
+            mask_ref = Image.new('L', mask_size, 0)
+            mask = ImageDraw.Draw(mask_ref)
+            mask.ellipse([(mask_coords[0][1], mask_coords[0][0]),(mask_coords[0][1] + mask_coords[2], mask_coords[0][0] + mask_coords[1])], fill=1)
+            mask = torch.from_numpy(np.array(mask_ref))
+        else:
+            mask = torch.zeros(mask_size, dtype=torch.uint8)
+            mask[mask_coords[0][0]:mask_coords[0][0]+mask_coords[1] , mask_coords[0][1]:mask_coords[0][1]+mask_coords[2]] = 1
         return mask.unsqueeze_(0)
+
+    def draw_region(self, img, coords, r=2):
+        if self.config['dataset'] == 'dme': # requires ellipse regions
+            img_ref = T.ToPILImage()(img)
+            ((y,x), h, w) = coords
+            draw = ImageDraw.Draw(img_ref)
+            draw.ellipse([(x, y),(x + w, y + h)], outline='red')
+            img_ref = np.array(img_ref)
+            img_ref = img_ref.transpose(2,0,1)
+            img_ref = torch.from_numpy(img_ref)
+            return img_ref
+        else:
+            ((y,x), h, w) = coords
+
+            for i in range(3):
+                img[i, y-r:y+h+r, x-r:x+r] = 0
+                img[i, y-r:y+r, x-r:x+w+r] = 0
+                img[i, y-r:y+h+r, x+w-r:x+w+r] = 0
+                img[i, y+h-r:y+h+r, x-r:x+w+r] = 0
+
+            # set red channel line to red
+            img[0, y-r:y+h+r, x-r:x+r] = 1
+            img[0, y-r:y+r, x-r:x+w+r] = 1
+            img[0, y-r:y+h+r, x+w-r:x+w+r] = 1
+            img[0, y+h-r:y+h+r, x-r:x+w+r] = 1
+            return img
+
+    def get_by_question_id(self, question_id):
+        for i in range(len(self.dataset_qa)):
+            if self.dataset_qa[i]['question_id'] == question_id:
+                return self.__getitem__(i)
+
+    def regenerate(self, question_ids):
+        # reduce self.dataset_qa to only contain question_ids
+        temp = [item for item in self.dataset_qa if item['question_id'] in question_ids]
+        self.dataset_qa = temp
 
     # override getitem method
     def __getitem__(self, index):
@@ -135,6 +185,11 @@ class VQARegionsSingle(VQABase):
 
         # get visual
         visual = self.dataset_visual.get_by_name(item_qa['image_name'])['visual']
+        if self.draw_regions:
+            # first, apply inverse transform to get original image
+            visual = vis.default_inverse_transform()(visual)
+            visual = self.draw_region(visual, item_qa['mask_coords'])
+            visual = vis.default_transform(self.config['size'])(T.ToPILImage()(visual))
         mask = self.get_mask(item_qa['mask_coords'], item_qa['mask_size'])
 
         if self.augment:
@@ -147,10 +202,8 @@ class VQARegionsSingle(VQABase):
         sample['question_id'] = item_qa['question_id']
 
         # if mask should be included in the questions
-        if self.mask_as_text:
-            sample['question'] = torch.LongTensor(item_qa['question_word_indexes_alt']) # question with location as text
-        else:  
-            sample['question'] = torch.LongTensor(item_qa['question_word_indexes'])
+
+        sample['question'] = torch.LongTensor(item_qa['question_word_indexes'])
 
         # get answer
         sample['answer'] = item_qa['answer_index']
@@ -165,7 +218,13 @@ class VQARegionsSingle(VQABase):
         data_val = json.load(open(jp(self.path_annotations_and_questions, 'val_qa.json'), 'r'))
         data_test = json.load(open(jp(self.path_annotations_and_questions, 'test_qa.json'), 'r'))
 
-        sets, maps = nlp.process_qa(self.config, data_train, data_val, data_test)
+        if self.mask_as_text:   
+            # exchange question_alt to question
+            for data in tqdm([data_train, data_val, data_test], desc='mask_as_text is set to True, therefore alt questions are used'):
+                for item in data:
+                    item['question'], item['question_alt'] = item['question_alt'], item['question']
+
+        sets, maps = nlp.process_qa(self.config, data_train, data_val, data_test, alt_questions=self.mask_as_text)
 
         # define paths to save pickle files
         if not os.path.exists(self.path_processed):
@@ -177,10 +236,10 @@ class VQARegionsSingle(VQABase):
 
 
 
-def get_vqa_dataset(subset, config, dataset_visual):
+def get_vqa_dataset(subset, config, dataset_visual, draw_regions=False):
     # provides dataset class for current training config
-    if config['dataset'] in ['cholec', 'sts2017']:
-        dataset_vqa = VQARegionsSingle(subset, config, dataset_visual)
+    if config['dataset'] in ['cholec', 'sts2017', 'insegcat', 'dme']:
+        dataset_vqa = VQARegionsSingle(subset, config, dataset_visual, draw_regions=draw_regions)
     elif config['dataset'] == 'IDRID':
         raise NotImplementedError
     else:

@@ -166,17 +166,10 @@ def encode_answers(data, map_answer_index):
 
 
 
-def process_qa(config, data_train, data_val, data_test, data_testdev = None):
+def process_qa(config, data_train, data_val, data_test, data_testdev = None, alt_questions = False):
 
-    if config['alt_questions']:
+    if alt_questions:
         max_question_len = config['max_question_length_alt']
-        # for each subset, swap question and question_alt fields. This allows alternative questions to be treated as normal questions, which is useful in the end
-        for d in [data_train, data_val, data_test]:
-            for elem in d:
-                elem['question'], elem['question_alt'] = elem['question_alt'], elem['question']
-        if data_testdev is not None:
-            for elem in data_testdev:
-                elem['question'], elem['question_alt'] = elem['question_alt'], elem['question']
     else:
         max_question_len = config['max_question_length']
 

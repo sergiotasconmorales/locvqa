@@ -65,6 +65,15 @@ def default_transform(size):
     ])
     return transform
 
+def default_inverse_transform():
+    # undoes basic ImageNet normalization
+    transform = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                        std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                    transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                        std = [ 1., 1., 1. ]),
+                                ])
+    return transform
+
 def get_visual_dataset(subset, config, transform=None):
     """Get visual dataset either from images or from extracted features
 
