@@ -1,0 +1,69 @@
+# logging
+comet_ml: True
+experiment_key:
+logs_dir: logs
+
+# dataset info
+dataset: sts2017
+path_data: data/STS2017_v1/ # must contain a folder named images and a folder named qa
+augment: True # only horizontal random flips in this case because rotations are not useful
+
+# training and data-loading-related parameters
+mask_as_text: False # whether mask should be in the question or as a separate mask
+
+# text pre-processing
+alt_questions: False # whether or not to use the questions that describe the region in the text (i.e. no external masks)
+max_question_length: 12 # length for questions that do not contain the region
+max_question_length_alt: 21 # length for questions that contain the region as text
+process_qa_again: False # whether or not QA pairs should be pre-processed again
+num_answers: 2 # binary in this case so we can use all answers. During QA pre-processing UNK token will be added so final number of possible answers will be this plus one.
+tokenizer: spacy # which tokenizer to use
+min_word_frequency: 0
+
+# training and data-loading-related parameters
+loss: bce
+batch_size: 64
+num_workers: 4
+pin_memory: True
+data_parallel: True
+cuda: True
+learning_rate: 0.0001
+optimizer: adam # options are adam, adadelta, rmsprop, sgd
+epochs: 100
+train_from: scratch # whether or not to resume training from some checkpoint. Options are best, last, or scratch
+patience: 20 # patience for the early stopping condition
+metric_to_monitor: 'loss_val' # which metric to monitor to see when to consider change as improvement. eg loss_val, acc_val, auc_val, ap_val
+
+# ********************************************
+# model structure
+# ********************************************
+
+# visual feature extraction and pre-processing of images
+size: 448
+model: VQA_LocalizedAttention #  VQA_MaskRegion, VQA_IgnoreMask
+visual_feature_size: 2048 # number of feature maps from the visual feature extractor
+question_feature_size: 1024 # size of embedded question (same as lstm_features)
+
+# visual feature extraction and pre-processing of images
+pre_extracted_visual_feat: False # must be false during visual feature extraction!
+size: 448
+imagenet_weights: True
+visual_extractor: resnet # options are resnet,
+
+# text feature extraction
+word_embedding_size: 300
+num_layers_LSTM: 1
+
+# attention
+attention: True
+attention_middle_size: 512 # size of the feature maps in the attention mechanism after the first operations (before internal fusion)
+number_of_glimpses: 2
+attention_dropout: 0.25
+attention_fusion: mul # options are cat, mul, sum
+
+# fusion
+fusion: cat # options are cat, mul, sum
+
+# classifier
+classifier_hidden_size: 1024
+classifier_dropout: 0.25

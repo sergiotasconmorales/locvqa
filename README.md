@@ -9,9 +9,12 @@ Our paper presents a method to answer questions about regions by using localized
 
 
 🔥 Repo updates
-- [ ] Data download and VQA-Introspect data preparation
-- [ ] Training 
-- [ ] Inference
+- [x] Data download
+- [x] Training 
+- [x] Inference
+- [x] Inference
+- [ ] Running the code in this repo to make sure everything works
+
 
 ## Installing requirements
 After cloning the repo, create a new environment with Python 3.9, activate it, and then install the required packages by running:
@@ -21,18 +24,36 @@ After cloning the repo, create a new environment with Python 3.9, activate it, a
 ---
 
 ## Data
-We used the VQA-Introspect and DME-VQA datasets to test our method. You can download the final versions of both datasets from [here](https://zenodo.org/record/7777878) and [here](https://zenodo.org/record/7777849), respectively. Notice that the image features of the COCO dataset (used by VQA-Introspect) must be downloaded separately for [train](https://nlp.cs.unc.edu/data/lxmert_data/mscoco_imgfeat/train2014_obj36.zip) and [val](https://nlp.cs.unc.edu/data/lxmert_data/mscoco_imgfeat/val2014_obj36.zip). For simplicity, you can organize your data as follows, after unzipping:
+
+You can access the datasets [here](https://zenodo.org/record/8192556). After downloading the data, make sure they follow the following structure
 
 **📂data**\
- ┣ **📂lxmert**\
- ┃&nbsp; ┗ **📂data**\
- ┃ &nbsp; &nbsp; &nbsp; ┣ **📂introspect** &nbsp;&nbsp;&nbsp;&nbsp;# introspect json files\
- ┃ &nbsp; &nbsp; &nbsp; ┗ **📂dme** &nbsp;&nbsp;&nbsp;&nbsp;# dme json files\
- ┗ **📂mscoco_imgfeat** &nbsp;&nbsp;&nbsp;&nbsp;# introspect visual features
+ ┣ **📂STS2017_v1** &nbsp; # RIS dataset\
+ ┣ **📂INSEGCAT_v1** &nbsp; # INSEGCAT dataset\
+ ┗ **📂DME_v1** &nbsp; # DME dataset\
 
-Optionally, you can follow the following steps to prepare the VQA-Introspect dataset yourself. 
+Basically, two versions of each dataset are included. 
+Each of the above dataset folders should contain two folders: `images` and `qa`. A third folder named `processed` is created during dataset class instantiation when you run the training script. In included this processed data too, so that you can reproduce our results more easily. The DME dataset also contains a folder named `answer_weights` which contains the weights for the answers. The other two datasets do not require this, since they are balanced.
 
-⚠️ **IMPORTANT: If you downloaded the data from the previous links, ignore the next section (Data preparation).**
+
+---
+
+## Config files
+
+Please refer to the following table for the names of the config files that lead to the results of the different baselines. Note that in our paper we took the average of 5 models trained with different seeds, so if you train only once, do not expect to obtain the same results reported in the paper.
+
+| **Baseline**   | **Config name**          |
+|----------------|--------------------------|
+| No mask        | config_nomask.yaml       |
+| Region in text | config_regionintext.yaml |
+| Crop region    | config_cropregion.yaml   |
+| Draw region    | config_drawregion.yaml   |
+| Ours           | config_ours.yaml         |
+
+
+Notice that the files mentioned in the previous table are available for each dataset in the `config` folder.
+
+In the config files, do not forget to configure the paths according to your system.
 
 
 ---
@@ -41,26 +62,29 @@ Optionally, you can follow the following steps to prepare the VQA-Introspect dat
 
 To train a model, run
 
-        python locvqa/train.py --path_config config/config_XX.yaml
+        python locvqa/train.py --path_config config/<dataset>/config_XX.yaml
 
-
-This will produce. 
+The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
 
 ---
 
 ## Inference
 
-To run inference ...
+To run inference, run
 
-        python locvqa/src/tasks/vqa_consistency.py --case XX
+        python locvqa/inference.py --path_config config/<dataset>/config_XX.yaml
 
-after inference... 
+after inference, the metrics are printed for the validation and test sets. Also, the folder `answers` will contain the answers files for test and validation (`answers_epoch_val.pt` and `answers_epoch_test.pt` ).
 
 ---
 
 ## Plotting results
 
-To plot results,·..
+To plot the metrics, run
+
+        python locvqa/plot_metrics.py --path_config config/<dataset>/config_XX.yaml
+
+This will produce plots of the learning curves, as well as metrics for test and validation in the logs folder specified in the yaml config file.
 
 ## Reference
 
@@ -80,5 +104,3 @@ This work was carried out at the [AIMI Lab](https://www.artorg.unibe.ch/research
 ## Acknowledgements
 
 This project was partially funded by the Swiss National Science Foundation through grant 191983.
-
-We thank the authors of [LXMERT](https://github.com/airsplay/lxmert) for the PyTorch implementation of their method.
