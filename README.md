@@ -64,7 +64,7 @@ To train a model, run
 
         python locvqa/train.py --path_config config/<dataset>/config_XX.yaml
 
-The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
+Where `<dataset>` can be one of (`dme`, `insegcat`,`sts2017`) and XX should be changed according to the table above. The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
 
 ---
 
