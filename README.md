@@ -12,7 +12,7 @@ Our paper presents a method to answer questions about regions by using localized
 - [x] Data download
 - [x] Training 
 - [x] Inference
-- [x] Inference
+- [x] Metrics plotting
 - [ ] Running the code in this repo to make sure everything works
 
 
