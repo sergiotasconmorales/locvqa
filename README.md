@@ -32,8 +32,7 @@ You can access the datasets [here](https://zenodo.org/record/8192556). After dow
  ┣ **📂INSEGCAT_v1** &nbsp; # INSEGCAT dataset\
  ┗ **📂DME_v1** &nbsp; # DME dataset\
 
-Basically, two versions of each dataset are included. 
-Each of the above dataset folders should contain two folders: `images` and `qa`. A third folder named `processed` is created during dataset class instantiation when you run the training script. In included this processed data too, so that you can reproduce our results more easily. The DME dataset also contains a folder named `answer_weights` which contains the weights for the answers. The other two datasets do not require this, since they are balanced.
+Each of the above dataset folders should contain two folders: `images` and `qa`. A third folder named `processed` is created during dataset class instantiation when you run the training script. I included this processed data too, so that you can reproduce our results more easily (If you want to generate the processed data again, set `process_qa_again` to `True` in the config files). The DME dataset also contains a folder named `answer_weights` which contains the weights for the answers. The other two datasets do not require this, since they are balanced.
 
 
 ---

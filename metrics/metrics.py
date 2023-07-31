@@ -12,6 +12,7 @@ from tqdm import tqdm
 from torch import nn
 from sklearn.metrics import roc_auc_score, average_precision_score, roc_curve, precision_recall_curve
 
+
 def vqa_accuracy(predicted, true):
     """ Compute the accuracies for a batch according to VQA challenge accuracy"""
     # in this case true is a [B, 10] matrix where ever row contains all answers for the particular question
