@@ -85,7 +85,7 @@ To plot the metrics, run
 
 This will produce plots of the learning curves, as well as metrics for test and validation in the logs folder specified in the yaml config file.
 
-## Reference
+## Citation
 
 This work was carried out at the [AIMI Lab](https://www.artorg.unibe.ch/research/aimi/index_eng.html) of the [ARTORG Center for Biomedical Engineering Research](https://www.artorg.unibe.ch) of the [University of Bern](https://www.unibe.ch/index_eng.html). Please cite this work as:
 

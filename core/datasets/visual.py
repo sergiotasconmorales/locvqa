@@ -6,8 +6,6 @@
 #   Sergio Tascon-Morales, Ph.D. Student, ARTORG Center, University of Bern
 
 import os
-import h5py
-import torch
 from os.path import join as jp
 from PIL import Image
 import torchvision.transforms as transforms

@@ -11,10 +11,6 @@
 import time
 import comet_ml
 import torch 
-import torch.nn as nn
-import random
-import numpy as np
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 import misc.io as io
 from core.datasets import loaders_factory
 from core.models import model_factory
