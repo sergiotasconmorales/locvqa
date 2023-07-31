@@ -25,7 +25,7 @@ After cloning the repo, create a new environment with Python 3.9, activate it, a
 
 ## Data
 
-You can access the datasets [here](https://zenodo.org/record/8192556). After downloading the data, make sure they follow the following structure
+You can access the datasets [here](https://zenodo.org/record/8192556). After downloading the data, decompress it in the repo folder, and make sure they follow the following structure (i.e. rename the data folder to `data` so that you don't have to change the path to the data in the config files)
 
 **📂data**\
  ┣ **📂STS2017_v1** &nbsp; # RIS dataset\
@@ -61,7 +61,7 @@ In the config files, do not forget to configure the paths according to your syst
 
 To train a model, run
 
-        python locvqa/train.py --path_config config/<dataset>/config_XX.yaml
+        python train.py --path_config config/<dataset>/config_XX.yaml
 
 Where `<dataset>` can be one of (`dme`, `insegcat`,`sts2017`) and XX should be changed according to the table above (note that `sts2017` corresponds to the dataset called `RIS` in the paper). The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
 
@@ -71,7 +71,7 @@ Where `<dataset>` can be one of (`dme`, `insegcat`,`sts2017`) and XX should be c
 
 To run inference, run
 
-        python locvqa/inference.py --path_config config/<dataset>/config_XX.yaml
+        python inference.py --path_config config/<dataset>/config_XX.yaml
 
 after inference, the metrics are printed for the validation and test sets. Also, the folder `answers` will contain the answers files for test and validation (`answers_epoch_val.pt` and `answers_epoch_test.pt` ).
 
@@ -81,7 +81,7 @@ after inference, the metrics are printed for the validation and test sets. Also,
 
 To plot the metrics, run
 
-        python locvqa/plot_metrics.py --path_config config/<dataset>/config_XX.yaml
+        python plot_metrics.py --path_config config/<dataset>/config_XX.yaml
 
 This will produce plots of the learning curves, as well as metrics for test and validation in the logs folder specified in the yaml config file.
 
