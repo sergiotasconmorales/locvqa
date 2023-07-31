@@ -13,7 +13,7 @@ Our paper presents a method to answer questions about regions by using localized
 - [x] Training 
 - [x] Inference
 - [x] Metrics plotting
-- [ ] Running the code in this repo to make sure everything works
+- [x] Running the code in this repo to make sure everything works
 
 
 ## Installing requirements
@@ -63,7 +63,7 @@ To train a model, run
 
         python locvqa/train.py --path_config config/<dataset>/config_XX.yaml
 
-Where `<dataset>` can be one of (`dme`, `insegcat`,`sts2017`) and XX should be changed according to the table above. The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
+Where `<dataset>` can be one of (`dme`, `insegcat`,`sts2017`) and XX should be changed according to the table above (note that `sts2017` corresponds to the dataset called `RIS` in the paper). The model weights will be stored in the logs folder specified in the config file. Weights and optimizer parameters are saved both for the best and last version of the model. A file named `logbook.json` will contain the config parameters as well as the values of the learning curves. In the folder `answers` the answers are stored for each epoch.
 
 ---
 
