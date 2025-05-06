@@ -14,6 +14,7 @@ Our paper presents a method to answer questions about regions by using localized
 - [x] Inference
 - [x] Metrics plotting
 - [x] Running the code in this repo to make sure everything works
+- [ ] Make sure everything works after updating requirement versions (update done on 06.05.2025)
 
 
 ## Installing requirements
