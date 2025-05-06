@@ -1,10 +1,10 @@
 comet_ml
 matplotlib
 pandas
-urllib3==1.26.15
+urllib3~>1.26.17
 requests-toolbelt==0.10.1
 scikit-learn
-torch==1.13.1
+torch~>2.2.0
 torchvision==0.14.1
-tqdm==4.45.0
+tqdm=~>4.66.3
 wandb==0.12.10
